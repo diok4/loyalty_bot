@@ -19,4 +19,4 @@ COPY . .
 RUN useradd -m bot && mkdir -p /app/storage/barcodes && chown -R bot:bot /app
 USER bot
 
-CMD ["python", "-m", "loyalty_bot.bot.main"]
+CMD ["sh", "-c", "alembic upgrade head && python -m loyalty_bot.bot.main"]
