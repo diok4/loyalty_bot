@@ -1,0 +1,37 @@
+services:
+  bot:
+    build: .
+    env_file: .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    volumes:
+      - ./storage:/app/storage
+    restart: unless-stopped
+    command: >
+      sh -c "alembic upgrade head && python -m loyalty_bot.bot.main"
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: loyalty_db
+      POSTGRES_USER: loyalty_user
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U loyalty_user -d loyalty_db"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    restart: unless-stopped
+
+volumes:
+  pg_data:
